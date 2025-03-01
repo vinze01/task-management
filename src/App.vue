@@ -8,7 +8,8 @@ const showModal = ref(false);
 
 function logout() {
   authStore.logout();
-  window.location.href = '/login';
+  // window.location.href = '/login';
+  router.push('/login');
 }
 
 onMounted(() => {
