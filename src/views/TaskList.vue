@@ -57,7 +57,7 @@ const deleteTask = (taskId: number) => {
           <button 
             @click="taskStore.markTaskAsCompleted(task.id)" 
             class="mark-done-button">
-            {{ task.completed ? "Completed" : "✔ Mark as Completed" }}
+            {{ task.completed ? "Completed" : "✔ Mark as Done" }}
           </button>
           <button 
             @click="deleteTask(task.id)" 
