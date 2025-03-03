@@ -6,6 +6,8 @@ import { useRouter } from 'vue-router';
 const authStore = useAuthStore();
 const router = useRouter();
 
+const generateCaptcha = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
 const form = reactive({
   username: '',
   password: '',
@@ -16,15 +18,11 @@ const form = reactive({
   captchaError: '',
 });
 
-function generateCaptcha() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-function refreshCaptcha() {
+const refreshCaptcha = () => {
   form.captchaCode = generateCaptcha();
-}
+};
 
-function validateForm() {
+const validateForm = () => {
   let isValid = true;
   form.usernameError = '';
   form.passwordError = '';
@@ -46,15 +44,15 @@ function validateForm() {
   }
 
   return isValid;
-}
+};
 
-function login() {
+const login = () => {
   if (validateForm()) {
     authStore.login(form.username);
     window.location.href = '/';
-
   }
-}
+};
+
 </script>
 
 <template>
