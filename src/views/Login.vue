@@ -1,67 +1,68 @@
 <script setup lang="ts">
-import { reactive } from 'vue';
-import { useAuthStore } from '@/stores/authStore';
-import { useRouter } from 'vue-router';
+import { reactive } from "vue";
+import { useAuthStore } from "@/stores/authStore";
+import { useRouter } from "vue-router";
 
 const authStore = useAuthStore();
 const router = useRouter();
 
+const generateCaptcha = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
 const form = reactive({
-  username: '',
-  password: '',
-  captchaInput: '',
+  username: "",
+  password: "",
+  captchaInput: "",
   captchaCode: generateCaptcha(),
-  usernameError: '',
-  passwordError: '',
-  captchaError: '',
+  usernameError: "",
+  passwordError: "",
+  captchaError: "",
 });
 
-function generateCaptcha() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-function refreshCaptcha() {
+const refreshCaptcha = () => {
   form.captchaCode = generateCaptcha();
-}
+};
 
-function validateForm() {
+const validateForm = () => {
   let isValid = true;
-  form.usernameError = '';
-  form.passwordError = '';
-  form.captchaError = '';
+  form.usernameError = "";
+  form.passwordError = "";
+  form.captchaError = "";
 
   if (!form.username.trim()) {
-    form.usernameError = 'Username is required';
+    form.usernameError = "Username is required";
     isValid = false;
   }
 
   if (!form.password.trim()) {
-    form.passwordError = 'Password is required';
+    form.passwordError = "Password is required";
     isValid = false;
   }
 
   if (form.captchaInput !== form.captchaCode) {
-    form.captchaError = 'Captcha does not match';
+    form.captchaError = "Captcha does not match";
     isValid = false;
   }
 
   return isValid;
-}
+};
 
-function login() {
+const login = () => {
   if (validateForm()) {
     authStore.login(form.username);
-    window.location.href = '/';
-
+    window.location.href = "/";
   }
-}
+};
 </script>
 
 <template>
   <div class="login-container">
     <div class="login-box">
       <div class="logo-container">
-        <img src="https://viptutors.co/assets/images/logo.png" alt="VIP Tutors Logo" class="logo">
+        <img
+          src="https://cdn-icons-png.freepik.com/512/5087/5087579.png"
+          alt="login logo"
+          class="logo"
+        />
       </div>
 
       <h2 class="title">Sign in to your account</h2>
@@ -69,13 +70,21 @@ function login() {
       <div class="input-group">
         <label for="username" class="label">Username / Email Address</label>
         <input v-model="form.username" type="text" id="username" class="input" />
-        <span v-if="form.usernameError && form.username.trim() === ''" class="error-message">{{ form.usernameError }}</span>
+        <span
+          v-if="form.usernameError && form.username.trim() === ''"
+          class="error-message"
+          >{{ form.usernameError }}</span
+        >
       </div>
 
       <div class="input-group">
         <label for="password" class="label">Password</label>
         <input v-model="form.password" type="password" id="password" class="input" />
-        <span v-if="form.passwordError && form.password.trim() === ''" class="error-message">{{ form.passwordError }}</span>
+        <span
+          v-if="form.passwordError && form.password.trim() === ''"
+          class="error-message"
+          >{{ form.passwordError }}</span
+        >
       </div>
 
       <div class="forgot-password">
@@ -89,7 +98,9 @@ function login() {
           <button @click="refreshCaptcha" class="refresh-captcha">🔄</button>
         </div>
         <input v-model="form.captchaInput" type="text" id="captcha" class="input" />
-        <span v-if="form.captchaError" class="error-message">{{ form.captchaError }}</span>
+        <span v-if="form.captchaError" class="error-message">{{
+          form.captchaError
+        }}</span>
       </div>
 
       <button @click="login" class="login-btn">Login</button>
@@ -118,18 +129,12 @@ function login() {
   transition: transform 0.3s ease;
 }
 
-.login-box:hover {
-  transform: translateY(-10px);
-}
-
 .logo-container {
   text-align: center;
-  margin-bottom: 30px;
 }
 
 .logo {
-  max-height: 50px;
-  width: auto;
+  max-height: 80px;
 }
 
 .title {
@@ -190,7 +195,7 @@ function login() {
 }
 
 .captcha-code {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: "Courier New", Courier, monospace;
   font-size: 1.2rem;
   color: #333;
   background-color: #e0e0e0;

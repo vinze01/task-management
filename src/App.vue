@@ -6,7 +6,7 @@ const authStore = useAuthStore();
 const user = authStore.user;
 const showModal = ref(false);
 
-function logout() {
+const logout = () => {
   authStore.logout();
   window.location.href = '/login';
 }
@@ -17,7 +17,7 @@ onMounted(() => {
   }
 });
 
-function closeModal() {
+const closeModal = () => {
   showModal.value = false;
 }
 </script>
@@ -27,7 +27,7 @@ function closeModal() {
     <nav class="navbar">
       <div class="navbar-content">
         <div class="navbar-logo">
-          <img src="https://viptutors.co/assets/images/logo.png" alt="Logo" class="logo" />
+          <img src="/favicon.ico" alt="Logo" class="logo" />
           <h1 class="title">Task Manager</h1>
         </div>
 
@@ -59,7 +59,7 @@ function closeModal() {
 
   <footer class="footer">
     <div class="footer-content">
-      <p>&copy; 2025 RVT Task Manager. All Rights Reserved.</p>
+      <p>&copy; {{ new Date().getFullYear() }} RVT Task Manager. All Rights Reserved.</p>
     </div>
   </footer>
 </template>
@@ -94,7 +94,7 @@ function closeModal() {
 
 .logo {
   height: 30px;
-  width: 100px;
+  border-radius: 20px;
   margin-right: 10px;
 }
 
