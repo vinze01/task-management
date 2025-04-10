@@ -55,7 +55,7 @@ A Task Manager application built using **Vue 3**, **TypeScript**, **Pinia**, and
 - **src/**: Contains the core application code.
   - **assets/**: Images and static assets.
   - **components/**: Reusable Vue components.
-  - **pages/**: Vue pages for each route (e.g., Task, Priority).
+  - **views/**: Vue pages for each route (e.g., Task, Priority).
   - **stores/**: Contains the `Pinia` store for managing application state (e.g., `authStore`).
   - **router/**: Contains the Vue Router configuration.
   - **App.vue**: The root component.

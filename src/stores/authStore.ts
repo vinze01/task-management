@@ -6,17 +6,15 @@ export const useAuthStore = defineStore('auth', {
     }),
 
     actions: {
-        login(username: string) {
-            this.user = username;
+        login: (username: string) => {
+            useAuthStore().user = username;
             localStorage.setItem('user', username);
         },
-        logout() {
-            this.user = null;
+        logout: () => {
+            useAuthStore().user = null;
             localStorage.removeItem('user');
             localStorage.removeItem('tasks');
         },
-        getUser() {
-            return this.user || localStorage.getItem('user');
-        }
+        getUser: () => useAuthStore().user || localStorage.getItem('user'),
     },
 });

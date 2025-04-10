@@ -4,7 +4,7 @@ export interface Task {
   id: number;
   title: string;
   completed: boolean;
-  date: string
+  date: string;
 }
 
 export const useTaskStore = defineStore('taskStore', {
@@ -12,9 +12,12 @@ export const useTaskStore = defineStore('taskStore', {
     tasks: JSON.parse(localStorage.getItem('tasks') || '[]') as Task[],
   }),
   actions: {
-    addTask(title: string) {
-      const newTask: Task = {
-        id: Date.now(), title, completed: false, date: new Date().toLocaleString('en-US', {
+    addTask: (title: any) => {
+      const newTask = {
+        id: Date.now(),
+        title,
+        completed: false,
+        date: new Date().toLocaleString('en-US', {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
@@ -25,22 +28,22 @@ export const useTaskStore = defineStore('taskStore', {
           hour12: true,
         }),
       };
-      this.tasks.push(newTask);
-      this.saveTasks();
+      useTaskStore().tasks.push(newTask);
+      useTaskStore().saveTasks();
     },
-    markTaskAsCompleted(id: number) {
-      const task = this.tasks.find(t => t.id === id);
+    markTaskAsCompleted: (id: any) => {
+      const task = useTaskStore().tasks.find((t: { id: any; }) => t.id === id);
       if (task) {
         task.completed = true;
-        this.saveTasks();
+        useTaskStore().saveTasks();
       }
     },
-    deleteTask(id: number) {
-      this.tasks = this.tasks.filter(t => t.id !== id);
-      this.saveTasks();
+    deleteTask: (id: any) => {
+      useTaskStore().tasks = useTaskStore().tasks.filter((t: { id: any; }) => t.id !== id);
+      useTaskStore().saveTasks();
     },
-    saveTasks() {
-      localStorage.setItem('tasks', JSON.stringify(this.tasks));
+    saveTasks: () => {
+      localStorage.setItem('tasks', JSON.stringify(useTaskStore().tasks));
     }
   }
 });
