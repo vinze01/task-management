@@ -12,7 +12,7 @@ const toast = ref('');
 const listTop = ref<HTMLElement | null>(null);
 let toastTimer: number | undefined;
 
-function showToast(msg: string) {
+const showToast = (msg: string): void => {
   toast.value = msg;
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => (toast.value = ''), 2600);
@@ -27,37 +27,37 @@ watch(sorted, () => {
   }
 });
 
-function scrollToList() {
+const scrollToList = (): void => {
   const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   listTop.value?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
 }
 
-function onPage(n: number) {
+const onPage = (n: number): void => {
   pagination.goTo(n);
   scrollToList();
 }
 
-function onPageSize(n: number) {
+const onPageSize = (n: number): void => {
   pagination.pageSize.value = n;
   pagination.reset();
   scrollToList();
 }
 
-function onToggle(id: number) {
+const onToggle = (id: number): void => {
   taskStore.toggleTask(id);
   showToast('Back to active — no shame! 💪');
 }
 
-function onRemove(id: number) {
+const onRemove = (id: number): void => {
   taskStore.deleteTask(id);
   showToast('Cleared from the hall of fame 🧹');
 }
 
-function onUpdate(id: number, patch: TaskEditPatch) {
+const onUpdate = (id: number, patch: TaskEditPatch): void => {
   if (taskStore.updateTask(id, patch)) showToast('Task updated ✏️');
 }
 
-function clearAll() {
+const clearAll = (): void => {
   taskStore.clearCompleted();
   showToast('Hall of fame wiped clean ✨');
 }

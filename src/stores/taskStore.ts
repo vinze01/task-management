@@ -36,18 +36,18 @@ export interface TaskPatch {
 
 const PRIORITIES: Priority[] = ['low', 'medium', 'high'];
 
-function normalizePriority(p: unknown): Priority {
+const normalizePriority = (p: unknown): Priority => {
   return typeof p === 'string' && (PRIORITIES as string[]).includes(p) ? (p as Priority) : 'medium';
 }
 
-function normalizeDueDate(d: unknown): string | null {
+const normalizeDueDate = (d: unknown): string | null => {
   if (typeof d !== 'string' || !d) return null;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
   const dt = new Date(`${d}T00:00:00`);
   return Number.isNaN(dt.getTime()) ? null : d;
 }
 
-function normalizeTime(t: unknown): string | null {
+const normalizeTime = (t: unknown): string | null => {
   if (typeof t !== 'string' || !t) return null;
   const m = t.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
   if (!m) return null;
@@ -57,14 +57,14 @@ function normalizeTime(t: unknown): string | null {
   return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
 }
 
-function normalizeISODateTime(v: unknown): string | null {
+const normalizeISODateTime = (v: unknown): string | null => {
   if (typeof v !== 'string' || !v) return null;
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
 /** Compare two ISO datetimes at minute precision (the picker's resolution). */
-function toMinuteKey(iso: string | null): string | null {
+const toMinuteKey = (iso: string | null): string | null => {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
@@ -72,7 +72,7 @@ function toMinuteKey(iso: string | null): string | null {
   return d.toISOString();
 }
 
-function todayKey(): string {
+const todayKey = (): string => {
   const n = new Date();
   const m = `${n.getMonth() + 1}`.padStart(2, '0');
   const d = `${n.getDate()}`.padStart(2, '0');
@@ -80,32 +80,32 @@ function todayKey(): string {
 }
 
 /** Full deadline as a Date, combining optional date + optional time. Null when no due date. */
-export function getDueDateTime(t: Pick<Task, 'dueDate' | 'dueTime'>): Date | null {
+export const getDueDateTime = (t: Pick<Task, 'dueDate' | 'dueTime'>): Date | null => {
   if (!t.dueDate) return null;
   const time = t.dueTime ?? '23:59';
   const d = new Date(`${t.dueDate}T${time}:00`);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function isOverdue(t: Pick<Task, 'completed' | 'dueDate' | 'dueTime'>): boolean {
+export const isOverdue = (t: Pick<Task, 'completed' | 'dueDate' | 'dueTime'>): boolean => {
   if (t.completed || !t.dueDate) return false;
   const due = getDueDateTime(t);
   if (!due) return t.dueDate < todayKey();
   return due.getTime() < Date.now();
 }
 
-export function isDueToday(t: Pick<Task, 'dueDate' | 'completed'>): boolean {
+export const isDueToday = (t: Pick<Task, 'dueDate' | 'completed'>): boolean => {
   if (t.completed || !t.dueDate) return false;
   return t.dueDate === todayKey();
 }
 
-export function getReminderDate(t: Pick<Task, 'reminderAt'>): Date | null {
+export const getReminderDate = (t: Pick<Task, 'reminderAt'>): Date | null => {
   if (!t.reminderAt) return null;
   const d = new Date(t.reminderAt);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function isReminderDue(t: Pick<Task, 'completed' | 'reminderAt' | 'reminderFired'>, now = Date.now()): boolean {
+export const isReminderDue = (t: Pick<Task, 'completed' | 'reminderAt' | 'reminderFired'>, now = Date.now()): boolean => {
   if (t.completed || !t.reminderAt || t.reminderFired) return false;
   const d = new Date(t.reminderAt);
   if (Number.isNaN(d.getTime())) return false;
@@ -113,14 +113,14 @@ export function isReminderDue(t: Pick<Task, 'completed' | 'reminderAt' | 'remind
 }
 
 /** Convert a datetime-local input value (YYYY-MM-DDTHH:MM) to ISO, or null. */
-export function localInputToISO(local: string): string | null {
+export const localInputToISO = (local: string): string | null => {
   if (!local) return null;
   const d = new Date(local);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
 /** Convert an ISO string to datetime-local input value (YYYY-MM-DDTHH:MM) in local time. */
-export function isoToLocalInput(iso: string | null): string {
+export const isoToLocalInput = (iso: string | null): string => {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -128,7 +128,7 @@ export function isoToLocalInput(iso: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function loadTasks(): Task[] {
+const loadTasks = (): Task[] => {
   try {
     const raw = localStorage.getItem('tasks');
     if (!raw) return [];

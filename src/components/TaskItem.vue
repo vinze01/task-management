@@ -50,7 +50,7 @@ const reminderHint = computed(() => {
   return `Alarm armed for ${fmt}.`;
 });
 
-function formatDate(iso: string): string {
+const formatDate = (iso: string): string => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString('en-US', {
@@ -61,7 +61,7 @@ function formatDate(iso: string): string {
   });
 }
 
-function formatDue(date: string, time: string | null): string {
+const formatDue = (date: string, time: string | null): string => {
   const d = new Date(`${date}T${time ?? '00:00'}:00`);
   if (Number.isNaN(d.getTime())) return date;
   return d.toLocaleString('en-US', time
@@ -69,23 +69,23 @@ function formatDue(date: string, time: string | null): string {
     : { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function formatReminder(iso: string): string {
+const formatReminder = (iso: string): string => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-function priorityLabel(p: Priority): string {
+const priorityLabel = (p: Priority): string => {
   return p === 'high' ? 'High' : p === 'low' ? 'Low' : 'Med';
 }
 
-function todayLocal(): string {
+const todayLocal = (): string => {
   const n = new Date();
   const pad = (v: number) => String(v).padStart(2, '0');
   return `${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}`;
 }
 
-async function startEdit() {
+const startEdit = async (): Promise<void> => {
   isEditing.value = true;
   draft.value = props.task.title;
   draftPriority.value = props.task.priority;
@@ -99,12 +99,12 @@ async function startEdit() {
   editInput.value?.select();
 }
 
-function cancelEdit() {
+const cancelEdit = (): void => {
   isEditing.value = false;
   editError.value = '';
 }
 
-function saveEdit() {
+const saveEdit = (): void => {
   if (!draft.value.trim()) {
     editError.value = 'Task title cannot be empty.';
     return;
@@ -127,13 +127,13 @@ function saveEdit() {
   isEditing.value = false;
 }
 
-function fillReminderFromDue() {
+const fillReminderFromDue = (): void => {
   if (draftDue.value) {
     draftReminder.value = `${draftDue.value}T${draftTime.value || '09:00'}`;
   }
 }
 
-function cyclePriority() {
+const cyclePriority = (): void => {
   const order: Priority[] = ['low', 'medium', 'high'];
   const next = order[(order.indexOf(props.task.priority) + 1) % order.length] ?? 'medium';
   emit('update', props.task.id, {
@@ -145,7 +145,7 @@ function cyclePriority() {
   });
 }
 
-function onDeleteClick() {
+const onDeleteClick = (): void => {
   if (!confirmDelete.value) {
     confirmDelete.value = true;
     return;
@@ -558,6 +558,21 @@ function onDeleteClick() {
 .edit-row {
   display: grid;
   gap: 0.55rem;
+  min-width: 0;
+}
+
+.edit-grid > div {
+  min-width: 0;
+}
+
+/* Native pickers have wide intrinsic widths — never let them push past the card. */
+.edit-grid input[type='date'],
+.edit-grid input[type='time'],
+.edit-grid input[type='datetime-local'] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 16px;
 }
 
 .edit-grid {

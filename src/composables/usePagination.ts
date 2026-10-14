@@ -48,11 +48,11 @@ export function usePagination<T>(items: Ref<readonly T[]>, initialSize = 10): Pa
     return out;
   });
 
-  function reset() {
+  const reset = (): void => {
     page.value = 1;
   }
 
-  function goTo(n: number) {
+  const goTo = (n: number): void => {
     page.value = Math.min(Math.max(1, n), totalPages.value);
   }
 
