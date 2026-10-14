@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import type { Task } from '@/stores/taskStore';
 
-defineProps<{ queue: Task[] }>();
+defineProps<{ queue: Task[]; muted: boolean }>();
 
 const emit = defineEmits<{
   (e: 'done', id: number): void;
   (e: 'snooze', id: number, minutes: number): void;
   (e: 'dismiss', id: number): void;
   (e: 'dismiss-all'): void;
+  (e: 'toggle-mute'): void;
 }>();
 
-function formatWhen(iso: string | null): string {
+const formatWhen = (iso: string | null): string => {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -31,7 +32,9 @@ function formatWhen(iso: string | null): string {
       <h2 id="alarm-title" class="dialog-title">
         {{ queue.length === 1 ? 'Reminder ringing!' : `${queue.length} reminders ringing!` }}
       </h2>
-      <p id="alarm-desc" class="dialog-desc">Time's up — starting with the first one below.</p>
+      <p id="alarm-desc" class="dialog-desc">
+        {{ muted ? 'Ringing silently — unmute to hear it again.' : 'Ringing until you act — mark done, snooze, or dismiss.' }}
+      </p>
 
       <ul class="alarm-list">
         <li v-for="t in queue" :key="t.id" class="alarm-item">
@@ -46,6 +49,14 @@ function formatWhen(iso: string | null): string {
       </ul>
 
       <div class="dialog-foot">
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          :aria-pressed="muted ? 'true' : 'false'"
+          @click="emit('toggle-mute')"
+        >
+          {{ muted ? '🔈 Unmute' : '🔇 Mute sound' }}
+        </button>
         <button type="button" class="btn btn-secondary btn-sm" @click="emit('dismiss-all')">Dismiss all</button>
       </div>
     </div>
@@ -148,7 +159,9 @@ function formatWhen(iso: string | null): string {
 .dialog-foot {
   margin-top: 1rem;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  gap: 0.55rem;
 }
 
 @keyframes toast-in {

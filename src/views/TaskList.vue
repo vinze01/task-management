@@ -25,7 +25,7 @@ let toastTimer: number | undefined;
 
 const CHEERS = ['Nice! +1 done 🎉', 'Crushed it! 💪', 'On a roll! 🚀', 'So satisfying! ✨', 'Task wizard! 🧙'];
 
-function showToast(msg: string) {
+const showToast = (msg: string): void => {
   toast.value = msg;
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => (toast.value = ''), 2600);
@@ -71,31 +71,31 @@ const pagination = usePagination(filtered, 10);
 // Filters narrow the list — start back at page 1. Task toggles/deletes keep the page.
 watch([filter, search, sort], () => pagination.reset());
 
-function scrollToList() {
+const scrollToList = (): void => {
   const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   listTop.value?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
 }
 
-function onPage(n: number) {
+const onPage = (n: number): void => {
   pagination.goTo(n);
   scrollToList();
 }
 
-function onPageSize(n: number) {
+const onPageSize = (n: number): void => {
   pagination.pageSize.value = n;
   pagination.reset();
   scrollToList();
 }
 
-function openQuestModal() {
+const openQuestModal = (): void => {
   showQuestModal.value = true;
 }
 
-function closeQuestModal() {
+const closeQuestModal = (): void => {
   showQuestModal.value = false;
 }
 
-function handleQuestSubmit(payload: QuestPayload) {
+const handleQuestSubmit = (payload: QuestPayload): void => {
   const created = taskStore.addTask(payload.title, {
     priority: payload.priority,
     dueDate: payload.dueDate,
@@ -112,7 +112,7 @@ function handleQuestSubmit(payload: QuestPayload) {
   }
 }
 
-function onToggle(id: number) {
+const onToggle = (id: number): void => {
   const t = tasks.value.find((x) => x.id === id);
   const wasCompleted = t?.completed ?? false;
   taskStore.toggleTask(id);
@@ -121,13 +121,13 @@ function onToggle(id: number) {
   }
 }
 
-function onRemove(id: number) {
+const onRemove = (id: number): void => {
   const t = tasks.value.find((x) => x.id === id);
   taskStore.deleteTask(id);
   showToast(t ? `Poof! “${t.title}” deleted 🗑️` : 'Task deleted.');
 }
 
-function onUpdate(id: number, patch: TaskEditPatch) {
+const onUpdate = (id: number, patch: TaskEditPatch): void => {
   if (taskStore.updateTask(id, patch)) showToast('Quest updated ✏️');
 }
 </script>
@@ -149,7 +149,7 @@ function onUpdate(id: number, patch: TaskEditPatch) {
       <div class="hero-mascot" aria-hidden="true">🚀</div>
     </div>
 
-    <div class="stats" role="group" aria-label="Task summary">
+    <div class="stats" role="group" aria-label="Task summary — swipe sideways on mobile to see all" tabindex="0">
       <div class="stat card fun-total"><span class="stat-emoji" aria-hidden="true">🗂️</span><span class="stat-num">{{ totalCount }}</span><span class="stat-label">Total quests</span></div>
       <div class="stat card fun-active"><span class="stat-emoji" aria-hidden="true">⚡</span><span class="stat-num">{{ activeCount }}</span><span class="stat-label">Active</span></div>
       <div class="stat card fun-done"><span class="stat-emoji" aria-hidden="true">🎉</span><span class="stat-num">{{ completedCount }}</span><span class="stat-label">Completed</span></div>
@@ -315,11 +315,17 @@ function onUpdate(id: number, patch: TaskEditPatch) {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.65rem;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(128px, 152px);
+  gap: 0.6rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 0.3rem;
+  scrollbar-width: thin;
 }
 
 .stat {
+  scroll-snap-align: start;
   padding: 0.75rem 0.9rem;
   display: grid;
   gap: 0.05rem;
@@ -452,7 +458,10 @@ function onUpdate(id: number, patch: TaskEditPatch) {
     grid-template-columns: 1fr 170px;
   }
   .stats {
+    grid-auto-flow: row;
     grid-template-columns: repeat(5, 1fr);
+    overflow: visible;
+    padding-bottom: 0;
   }
 }
 

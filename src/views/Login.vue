@@ -20,17 +20,17 @@ const form = reactive({
 const isSubmitting = ref(false);
 const formError = ref('');
 
-function toggleAvatar(a: string) {
+const toggleAvatar = (a: string): void => {
   form.avatar = form.avatar === a ? '' : a;
 }
 
-function refreshCaptcha() {
+const refreshCaptcha = (): void => {
   form.captchaCode = generateCaptcha();
   form.captchaInput = '';
   form.captchaError = '';
 }
 
-function validateForm(): boolean {
+const validateForm = (): boolean => {
   let valid = true;
   form.usernameError = '';
   form.captchaError = '';
@@ -48,7 +48,7 @@ function validateForm(): boolean {
   return valid;
 }
 
-async function login() {
+const login = async (): Promise<void> => {
   if (isSubmitting.value) return;
   if (!validateForm()) return;
   isSubmitting.value = true;

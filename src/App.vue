@@ -5,7 +5,13 @@ import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { useTaskStore, type Task } from '@/stores/taskStore';
-import { useReminderScheduler, playAlarmSound, sendSystemNotification } from '@/composables/useReminders';
+import {
+  useReminderScheduler,
+  playAlarmSound,
+  vibrateAlarm,
+  sendSystemNotification,
+  useWakeLock,
+} from '@/composables/useReminders';
 import ReminderDialog from '@/components/ReminderDialog.vue';
 
 const authStore = useAuthStore();
@@ -19,32 +25,68 @@ const menuOpen = ref(false);
 const showWelcome = ref(false);
 const dialogRef = ref<HTMLDivElement | null>(null);
 const alarmQueue = ref<Task[]>([]);
+const alarmMuted = ref(false);
+let ringTimer: number | undefined;
 
-function handleAlarm(task: Task) {
+const ringOnce = (): void => {
+  if (alarmMuted.value || alarmQueue.value.length === 0) return;
   playAlarmSound();
+  vibrateAlarm();
+}
+
+const startRinging = (): void => {
+  stopRinging();
+  ringOnce();
+  // Keep ringing until every alarm is actioned (done / snoozed / dismissed).
+  ringTimer = window.setInterval(() => {
+    if (document.visibilityState === 'visible') ringOnce();
+  }, 4000);
+}
+
+const stopRinging = (): void => {
+  window.clearInterval(ringTimer);
+  ringTimer = undefined;
+}
+
+const handleAlarm = (task: Task): void => {
+  // System notification fires once per task; the chime loop is driven by the watcher below.
   sendSystemNotification(task);
   if (!alarmQueue.value.some((t) => t.id === task.id)) {
-    alarmQueue.value.push(task);
+    alarmQueue.value = [...alarmQueue.value, task];
   }
 }
 
-useReminderScheduler(handleAlarm);
+const toggleAlarmMute = (): void => {
+  alarmMuted.value = !alarmMuted.value;
+  if (!alarmMuted.value) ringOnce();
+}
 
-function alarmDone(id: number) {
+useReminderScheduler(handleAlarm);
+useWakeLock();
+
+watch(alarmQueue, (q) => {
+  if (q.length > 0) startRinging();
+  else {
+    stopRinging();
+    alarmMuted.value = false;
+  }
+});
+
+const alarmDone = (id: number): void => {
   taskStore.markTaskAsCompleted(id);
   alarmQueue.value = alarmQueue.value.filter((t) => t.id !== id);
 }
 
-function alarmSnooze(id: number, minutes: number) {
+const alarmSnooze = (id: number, minutes: number): void => {
   taskStore.snoozeReminder(id, minutes);
   alarmQueue.value = alarmQueue.value.filter((t) => t.id !== id);
 }
 
-function alarmDismiss(id: number) {
+const alarmDismiss = (id: number): void => {
   alarmQueue.value = alarmQueue.value.filter((t) => t.id !== id);
 }
 
-function alarmDismissAll() {
+const alarmDismissAll = (): void => {
   alarmQueue.value = [];
 }
 
@@ -62,17 +104,17 @@ const initial = computed(() => (displayName.value ? displayName.value.charAt(0).
 const headerAvatar = computed(() => avatar.value || initial.value);
 const isDark = computed(() => themeStore.theme === 'dark');
 
-function closeMenu() {
+const closeMenu = (): void => {
   menuOpen.value = false;
 }
 
-async function logout() {
+const logout = async (): Promise<void> => {
   authStore.logout();
   closeMenu();
   await router.push('/login');
 }
 
-function dismissWelcome(persist = true) {
+const dismissWelcome = (persist = true): void => {
   showWelcome.value = false;
   if (persist) {
     try {
@@ -81,7 +123,7 @@ function dismissWelcome(persist = true) {
   }
 }
 
-function onKeydown(e: KeyboardEvent) {
+const onKeydown = (e: KeyboardEvent): void => {
   if (e.key === 'Escape') {
     if (alarmQueue.value.length > 0) {
       alarmDismissAll();
@@ -92,7 +134,7 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
-function onOverlayClick(e: MouseEvent) {
+const onOverlayClick = (e: MouseEvent): void => {
   if (e.target === e.currentTarget) dismissWelcome();
 }
 
@@ -101,9 +143,37 @@ watch(
   () => closeMenu(),
 );
 
+// Browsers gate audio behind a user gesture — warm up the AudioContext on the
+// first tap/keypress so a later alarm is allowed to make sound.
+const unlockAudio = (): void => {
+  try {
+    const Ctx =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    void ctx
+      .resume()
+      .then(() => ctx.close().catch(() => undefined))
+      .catch(() => undefined);
+  } catch {
+    // ignore
+  }
+  window.removeEventListener('pointerdown', unlockAudio);
+  window.removeEventListener('keydown', unlockAudio);
+}
+
+// Returning to the tab after throttled background timers: ring right away.
+const onVisibility = (): void => {
+  if (document.visibilityState === 'visible' && alarmQueue.value.length > 0) ringOnce();
+}
+
 onMounted(() => {
   themeStore.init();
   window.addEventListener('keydown', onKeydown);
+  window.addEventListener('pointerdown', unlockAudio);
+  window.addEventListener('keydown', unlockAudio);
+  document.addEventListener('visibilitychange', onVisibility);
   let dismissed = false;
   try {
     dismissed = sessionStorage.getItem('welcome-dismissed') === '1';
@@ -115,6 +185,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown);
+  window.removeEventListener('pointerdown', unlockAudio);
+  window.removeEventListener('keydown', unlockAudio);
+  document.removeEventListener('visibilitychange', onVisibility);
+  stopRinging();
 });
 </script>
 
@@ -223,10 +297,12 @@ onBeforeUnmount(() => {
 
     <ReminderDialog
       :queue="alarmQueue"
+      :muted="alarmMuted"
       @done="alarmDone"
       @snooze="alarmSnooze"
       @dismiss="alarmDismiss"
       @dismiss-all="alarmDismissAll"
+      @toggle-mute="toggleAlarmMute"
     />
   </div>
 </template>

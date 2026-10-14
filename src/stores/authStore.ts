@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 export type StoredUser = string | null;
 
 /** Extract a safe display name from anything that might be in storage. Never returns raw JSON. */
-export function toDisplayName(input: unknown): string | null {
+export const toDisplayName = (input: unknown): string | null => {
   if (input === null || input === undefined) return null;
 
   if (typeof input === 'string') {
@@ -56,21 +56,21 @@ export function toDisplayName(input: unknown): string | null {
 /** Adventurer avatars offered on the sign-in screen. */
 export const AVATARS = ['🦊', '🐼', '🐸', '🦄', '🐝', '🦁', '🐙', '🌵', '⚡', '🚀', '🍕', '🎮'] as const;
 
-function normalizeAvatar(v: unknown): string | null {
+const normalizeAvatar = (v: unknown): string | null => {
   if (typeof v !== 'string') return null;
   const t = v.trim();
   if (!t || t.length > 12) return null;
   return t;
 }
 
-function readStoredAvatar(): string | null {
+const readStoredAvatar = (): string | null => {
   try {
     return normalizeAvatar(localStorage.getItem('avatar'));
   } catch {
     return null;
   }
 }
-function readStoredUser(): StoredUser {
+const readStoredUser = (): StoredUser => {
   try {
     const raw = localStorage.getItem('user');
     const name = toDisplayName(raw);

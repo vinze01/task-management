@@ -19,7 +19,9 @@ A playful quest-board SPA built with **Vue 3 + TypeScript + Vite**, using **Pini
 ### 3. Priorities, due dates & alarms (`src/stores/taskStore.ts`)
 - Each task stores: `id`, `title`, `completed`, `date` (created ISO), `priority` (`low|medium|high`), `dueDate` (`YYYY-MM-DD|null`), `dueTime` (`HH:MM|null`), `reminderAt` (alarm ISO|null), `reminderFired` (bool).
 - Priority pills cycle Low → Med → High on click; due pills flag Overdue / Due today; 🔔 pills show the alarm time (muted `Rang · …` after ringing).
-- **Alarms you set yourself**: pick any exact date + time per quest. While the app tab is open, a 10s scheduler (`src/composables/useReminders.ts`) rings with a chime (WebAudio, no assets), an optional system notification (permission-gated), and an in-app alarm dialog with ✅ Mark done / 😴 Snooze 10m / Dismiss.
+- **Alarms you set yourself**: pick any exact date + time per quest. While the app tab is open, a 10s scheduler (`src/composables/useReminders.ts`) rings with a chime (WebAudio, no assets) + phone buzz (Vibration API, Android) + an optional system notification (permission-gated) + an in-app alarm dialog.
+- **Continuous ringing**: the chime + buzz repeat every 4 seconds until you ✅ Mark done, 😴 Snooze 10m, Dismiss, or Dismiss all. A 🔇 Mute sound toggle silences the loop while keeping the dialog.
+- **Mobile helpers**: a Wake Lock request keeps the screen on while the board is open, and audio is unlocked on your first tap (browsers gate sound behind a gesture). Honest limit (also noted in the form): phones suspend JavaScript in backgrounded tabs and sleeping screens, so no web app can ring from a closed/locked phone — keep the tab open for medicine alarms.
 - Editing a quest never silently re-arms a rung alarm — `updateTask` only resets the fired flag when the alarm time actually changes (minute precision, so snoozed second-precision times don't false-trigger).
 - Old stored tasks migrate safely (default `medium` priority, no dates/alarms).
 
@@ -135,7 +137,7 @@ VS Code + Volar (disable Vetur). See `.vscode/extensions.json`.
 ## Known limitations / ideas
 
 - No router auth guard; all routes are public demo pages.
-- Alarms fire only while the app tab is open (no backend/workers); system notifications need permission, sound needs one prior click (browser autoplay policy).
+- Alarms fire only while the app tab is open (no backend/workers); they ring continuously until actioned, with mute + snooze. System notifications need permission, sound needs one prior tap (browser autoplay policy), buzz needs Android, and a locked/sleeping phone suspends all page JS (OS-level limit) — Wake Lock mitigates this while the board is visible.
 - No per-user data, no sharing/sync, no recurring tasks/alarms.
 - CAPTCHA is client-only; no real backend auth exists (and that's why there's no password field).
 - No tests, no lint, no LICENSE file.

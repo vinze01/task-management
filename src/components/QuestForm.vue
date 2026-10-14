@@ -27,14 +27,14 @@ const pastWarn = ref('');
 
 const { permission, enableNotifications } = useNotificationPermission();
 
-function useDueForReminder() {
+const useDueForReminder = (): void => {
   if (due.value) {
     reminder.value = `${due.value}T${time.value || '09:00'}`;
     reminderOn.value = true;
   }
 }
 
-function handleSubmit() {
+const handleSubmit = (): void => {
   errorMessage.value = '';
   pastWarn.value = '';
   if (!title.value.trim()) {
@@ -140,6 +140,7 @@ function handleSubmit() {
           <span v-else-if="permission === 'denied'" class="perm-warn">System alerts blocked — in-app alarm still works</span>
         </div>
         <p v-if="pastWarn" class="hint warn" role="status">{{ pastWarn }}</p>
+        <p class="hint">⏰ Rings with sound + buzz until you act — but only while this tab is open. Phones suspend sleeping web pages.</p>
       </div>
     </div>
 
@@ -160,20 +161,24 @@ function handleSubmit() {
 }
 
 .prio-picker {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.45rem;
 }
 
 .prio-btn {
   min-height: 44px;
-  padding: 0.45rem 0.9rem;
+  min-width: 0;
+  padding: 0.45rem 0.4rem;
   border-radius: var(--radius-full);
   border: 1.5px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-muted);
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: 0.83rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
   transition: transform var(--transition-fast), border-color var(--transition-fast);
 }
@@ -199,8 +204,25 @@ function handleSubmit() {
 .due-grid {
   display: grid;
   gap: 0.6rem;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   min-width: 0;
+}
+
+.due-grid > div,
+.rem-fields,
+.rem-card {
+  min-width: 0;
+}
+
+/* Native pickers have wide intrinsic widths and sub-16px text triggers
+   iOS auto-zoom — both cause overlap on narrow phones. */
+.quest-form input[type='date'],
+.quest-form input[type='time'],
+.quest-form input[type='datetime-local'] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 16px;
 }
 
 .hint {
@@ -287,9 +309,9 @@ function handleSubmit() {
   flex: 1 1 140px;
 }
 
-@media (max-width: 420px) {
+@media (min-width: 640px) {
   .due-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 </style>

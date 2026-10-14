@@ -11,7 +11,7 @@ const dialogRef = ref<HTMLDivElement | null>(null);
 let prevFocus: Element | null = null;
 let prevOverflow = '';
 
-function focusables(): HTMLElement[] {
+const focusables = (): HTMLElement[] => {
   const root = dialogRef.value;
   if (!root) return [];
   return [...root.querySelectorAll<HTMLElement>(
@@ -19,7 +19,7 @@ function focusables(): HTMLElement[] {
   )].filter((el) => el.offsetParent !== null || el === document.activeElement);
 }
 
-function trapTab(e: KeyboardEvent) {
+const trapTab = (e: KeyboardEvent): void => {
   if (e.key !== 'Tab') return;
   const items = focusables();
   if (items.length === 0) return;
@@ -34,7 +34,7 @@ function trapTab(e: KeyboardEvent) {
   }
 }
 
-function onKeydown(e: KeyboardEvent) {
+const onKeydown = (e: KeyboardEvent): void => {
   if (e.key === 'Escape') {
     e.stopPropagation();
     emit('close');
@@ -43,7 +43,7 @@ function onKeydown(e: KeyboardEvent) {
   trapTab(e);
 }
 
-function onOverlay(e: MouseEvent) {
+const onOverlay = (e: MouseEvent): void => {
   if (e.target === e.currentTarget) emit('close');
 }
 
