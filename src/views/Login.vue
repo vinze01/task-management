@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { reactive } from "vue";
-import { useAuthStore } from "@/stores/authStore";
-import { useRouter } from "vue-router";
+import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore, AVATARS } from '@/stores/authStore';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -9,250 +9,325 @@ const router = useRouter();
 const generateCaptcha = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
 const form = reactive({
-  username: "",
-  password: "",
-  captchaInput: "",
+  username: '',
+  avatar: '',
+  captchaInput: '',
   captchaCode: generateCaptcha(),
-  usernameError: "",
-  passwordError: "",
-  captchaError: "",
+  usernameError: '',
+  captchaError: '',
 });
 
-const refreshCaptcha = () => {
-  form.captchaCode = generateCaptcha();
-};
+const isSubmitting = ref(false);
+const formError = ref('');
 
-const validateForm = () => {
-  let isValid = true;
-  form.usernameError = "";
-  form.passwordError = "";
-  form.captchaError = "";
+function toggleAvatar(a: string) {
+  form.avatar = form.avatar === a ? '' : a;
+}
+
+function refreshCaptcha() {
+  form.captchaCode = generateCaptcha();
+  form.captchaInput = '';
+  form.captchaError = '';
+}
+
+function validateForm(): boolean {
+  let valid = true;
+  form.usernameError = '';
+  form.captchaError = '';
+  formError.value = '';
 
   if (!form.username.trim()) {
-    form.usernameError = "Username is required";
-    isValid = false;
+    form.usernameError = 'Enter your name or email.';
+    valid = false;
   }
-
-  if (!form.password.trim()) {
-    form.passwordError = "Password is required";
-    isValid = false;
+  if (form.captchaInput.trim().toUpperCase() !== form.captchaCode) {
+    form.captchaError = 'CAPTCHA does not match. Try again.';
+    valid = false;
   }
+  if (!valid) formError.value = 'Please fix the highlighted fields.';
+  return valid;
+}
 
-  if (form.captchaInput !== form.captchaCode) {
-    form.captchaError = "Captcha does not match";
-    isValid = false;
+async function login() {
+  if (isSubmitting.value) return;
+  if (!validateForm()) return;
+  isSubmitting.value = true;
+  try {
+    // Demo-only delay to show loading state; no backend involved.
+    await new Promise((r) => setTimeout(r, 350));
+    authStore.login(form.username, form.avatar || null);
+    await router.push('/');
+  } finally {
+    isSubmitting.value = false;
   }
-
-  return isValid;
-};
-
-const login = () => {
-  if (validateForm()) {
-    authStore.login(form.username);
-    window.location.href = "/";
-  }
-};
+}
 </script>
 
 <template>
-  <div class="login-container">
-    <div class="login-box">
-      <div class="logo-container">
-        <img
-          src="https://cdn-icons-png.freepik.com/512/5087/5087579.png"
-          alt="login logo"
-          class="logo"
-        />
+  <section class="login-wrap" aria-labelledby="login-heading">
+    <div class="card login-card">
+      <div class="login-head">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+            <path d="M4 12.5 9.5 18 20 6.5" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <h1 id="login-heading" class="h1">Ready for a productive day? 🚀</h1>
+        <p class="sub">No passwords here — just pick a name and avatar. Demo only, everything stays in this browser ✨.</p>
       </div>
 
-      <h2 class="title">Sign in to your account</h2>
+      <form @submit.prevent="login" novalidate>
+        <div v-if="formError" class="alert" role="alert">{{ formError }}</div>
 
-      <div class="input-group">
-        <label for="username" class="label">Username / Email Address</label>
-        <input v-model="form.username" type="text" id="username" class="input" />
-        <span
-          v-if="form.usernameError && form.username.trim() === ''"
-          class="error-message"
-          >{{ form.usernameError }}</span
-        >
-      </div>
-
-      <div class="input-group">
-        <label for="password" class="label">Password</label>
-        <input v-model="form.password" type="password" id="password" class="input" />
-        <span
-          v-if="form.passwordError && form.password.trim() === ''"
-          class="error-message"
-          >{{ form.passwordError }}</span
-        >
-      </div>
-
-      <div class="forgot-password">
-        <a href="#" class="forgot-link">Reset Password</a>
-      </div>
-
-      <div class="input-group">
-        <label for="captcha" class="label">Enter the characters you see above</label>
-        <div class="captcha-container">
-          <span class="captcha-code">{{ form.captchaCode }}</span>
-          <button @click="refreshCaptcha" class="refresh-captcha">🔄</button>
+        <div class="field">
+          <label for="username" class="field-label">Your name</label>
+          <input
+            id="username"
+            v-model="form.username"
+            type="text"
+            class="field-input"
+            autocomplete="nickname"
+            placeholder="e.g. Alex"
+            maxlength="40"
+            :aria-invalid="form.usernameError ? 'true' : 'false'"
+            :aria-describedby="form.usernameError ? 'username-error' : undefined"
+          />
+          <p v-if="form.usernameError" id="username-error" class="field-error" role="alert">{{ form.usernameError }}</p>
         </div>
-        <input v-model="form.captchaInput" type="text" id="captcha" class="input" />
-        <span v-if="form.captchaError" class="error-message">{{
-          form.captchaError
-        }}</span>
-      </div>
 
-      <button @click="login" class="login-btn">Login</button>
+        <div class="field">
+          <span id="avatar-label" class="field-label">Pick your adventurer <span class="opt">(optional)</span></span>
+          <div class="avatar-grid" role="group" aria-labelledby="avatar-label">
+            <button
+              v-for="a in AVATARS"
+              :key="a"
+              type="button"
+              :class="['avatar-opt', { active: form.avatar === a }]"
+              :aria-pressed="form.avatar === a ? 'true' : 'false'"
+              :aria-label="`Use ${a} as your avatar`"
+              @click="toggleAvatar(a)"
+            >
+              {{ a }}
+            </button>
+          </div>
+          <p class="hint">{{ form.avatar ? 'Looking sharp! This shows in the header.' : 'Skip it and we’ll use your initial instead.' }}</p>
+        </div>
 
-      <div class="sign-up">
-        Don't have an account? <a href="#" class="sign-up-link">Create an account</a>
-      </div>
+        <div class="field">
+          <label for="captcha" class="field-label">Security check</label>
+          <p class="hint">Type the characters shown below.</p>
+          <div class="captcha-box">
+            <span class="captcha-code" aria-label="CAPTCHA code">{{ form.captchaCode }}</span>
+            <button
+              type="button"
+              class="btn btn-secondary btn-toggle"
+              aria-label="Get a new CAPTCHA code"
+              @click="refreshCaptcha"
+            >
+              New code
+            </button>
+          </div>
+          <input
+            id="captcha"
+            v-model="form.captchaInput"
+            type="text"
+            class="field-input mono"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            placeholder="Enter code"
+            :aria-invalid="form.captchaError ? 'true' : 'false'"
+            :aria-describedby="form.captchaError ? 'captcha-error' : undefined"
+          />
+          <p v-if="form.captchaError" id="captcha-error" class="field-error" role="alert">{{ form.captchaError }}</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" :disabled="isSubmitting">
+          {{ isSubmitting ? 'Opening your board…' : '⚔️ Start questing' }}
+        </button>
+
+        <p class="demo-note">No account needed. Any name + CAPTCHA works, and your avatar shows in the header. Try dark mode 🌙!</p>
+      </form>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>
-.login-container {
+.login-wrap {
   display: flex;
   justify-content: center;
+  padding: 0.5rem 0 0.5rem;
+  min-width: 0;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 1.4rem;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: var(--gradient-brand);
+}
+
+.login-head {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: start;
+  margin-bottom: 1.1rem;
+}
+
+.brand-mark {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--gradient-brand);
+  box-shadow: var(--shadow-sm);
+  animation: float-slow 3s ease-in-out infinite;
 }
 
-.login-box {
-  background-color: white;
-  padding: 40px;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  width: 100%;
-  transition: transform 0.3s ease;
+.h1 {
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
-.logo-container {
-  text-align: center;
+.sub {
+  color: var(--color-muted);
+  font-size: 0.93rem;
 }
 
-.logo {
-  max-height: 80px;
+form {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
 }
 
-.title {
-  font-size: 1.8rem;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 30px;
-  color: #333;
+.field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
-.input-group {
-  margin-bottom: 20px;
+.hint {
+  color: var(--color-muted);
+  font-size: 0.86rem;
 }
 
-.label {
-  font-weight: 500;
-  color: #666;
-  margin-bottom: 8px;
-}
-
-.input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  background-color: #f7f7f7;
-  font-size: 1rem;
-  color: #333;
-  transition: all 0.3s ease;
-}
-
-.input:focus {
-  border-color: #ff5f6d;
-  background-color: #fff;
-  outline: none;
-}
-
-.forgot-password {
-  text-align: right;
-}
-
-.forgot-link {
+.alert {
+  background: var(--color-danger-bg);
+  border: 1px solid #fecaca;
+  color: var(--color-danger-hover);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.8rem;
   font-size: 0.9rem;
-  color: #ff5f6d;
-  text-decoration: none;
+  font-weight: 600;
 }
 
-.forgot-link:hover {
-  text-decoration: underline;
+.opt {
+  font-weight: 600;
+  color: var(--color-faint);
+  font-size: 0.82rem;
 }
 
-.captcha-container {
-  display: flex;
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.45rem;
+}
+
+.avatar-opt {
+  display: inline-flex;
   align-items: center;
-  background-color: #f0f0f0;
-  padding: 10px;
-  border-radius: 10px;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 1.45rem;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: transform var(--transition-bounce), border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.avatar-opt:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-strong);
+}
+
+.avatar-opt.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  transform: scale(1.08);
+}
+
+.btn-toggle {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.captcha-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--color-surface-muted);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.7rem;
+  min-width: 0;
 }
 
 .captcha-code {
-  font-family: "Courier New", Courier, monospace;
-  font-size: 1.2rem;
-  color: #333;
-  background-color: #e0e0e0;
-  padding: 6px;
-  border-radius: 6px;
-  margin-right: 10px;
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.7rem;
+  user-select: none;
+  overflow-wrap: anywhere;
 }
 
-.refresh-captcha {
-  background-color: #ff5f6d;
-  color: white;
-  padding: 8px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+.mono {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
 }
 
-.refresh-captcha:hover {
-  background-color: #e04f5f;
-}
-
-.login-btn {
+.btn-block {
   width: 100%;
-  padding: 15px;
-  background-color: #ff5f6d;
-  color: white;
-  font-size: 1.1rem;
-  font-weight: bold;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  min-height: 48px;
+  font-size: 1rem;
 }
 
-.login-btn:hover {
-  background-color: #e04f5f;
-}
-
-.sign-up {
+.demo-note {
   text-align: center;
-  font-size: 0.9rem;
-  margin-top: 20px;
+  color: var(--color-faint);
+  font-size: 0.84rem;
 }
 
-.sign-up-link {
-  color: #ff5f6d;
-  text-decoration: none;
-}
-
-.sign-up-link:hover {
-  text-decoration: underline;
-}
-
-.error-message {
-  color: red;
-  font-size: 0.9rem;
-  margin-top: 5px;
+@media (max-width: 380px) {
+  .login-card {
+    padding: 1.1rem;
+  }
+  .avatar-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .btn-toggle {
+    width: 100%;
+  }
 }
 </style>
